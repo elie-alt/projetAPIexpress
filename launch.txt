@@ -1,0 +1,8 @@
+packages (pour avoir les node_modules) : 
+npm install express --save //ajout du packet express js
+npm install --save bcrypt body-parser express jsonwebtoken passport passport-jwt passport-local //authentification & jetons
+npm install sequelize mysql2 --save 
+npm install -g node-dev
+
+à lancer dans le fichier que l'on veut run (être dans le bon fichier) : 
+node-dev fichier.js
