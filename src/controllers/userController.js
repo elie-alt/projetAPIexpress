@@ -19,7 +19,7 @@ const upload = multer({ storage: storage });
 const secretKey = '3b6d2e359073f3d2a27e8daad1acbd215d4d357020e6ac0291398a675a06ad86';
 
 function generateToken(user) {
-  return jwt.sign({ id: user.id, username: user.username }, secretKey, { expiresIn: '1h' });
+  return jwt.sign({ id: user.id, username: user.username, role: user.role }, secretKey, { expiresIn: '1h' });
 }
 
 async function authenticateUser(req, res) {
@@ -132,9 +132,127 @@ async function uploadFile(req, res) {
   }
 }
 
+// Nouvelle fonction pour supprimer un utilisateur
+async function deleteUser(req, res) {
+  const userIdToDelete = req.params.userId;
+
+  try {
+    const connection = await mysql.createConnection({
+      host: 'localhost',
+      user: 'votreUtilisateur',
+      password: 'votreMotDePasse',
+      database: 'votreBaseDeDonnees',
+      port: 8000,
+    });
+
+    await connection.execute('DELETE FROM users WHERE id = ?', [userIdToDelete]);
+    await connection.end();
+
+    res.json({ status: 'ok', message: 'User deleted successfully' });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ status: 'ko', error: 'Internal Server Error' });
+  }
+}
+
+// Nouvelle fonction pour bloquer un utilisateur
+async function banUser(req, res) {
+  const userIdToBan = req.params.userId;
+
+  try {
+    const connection = await mysql.createConnection({
+      host: 'localhost',
+      user: 'votreUtilisateur',
+      password: 'votreMotDePasse',
+      database: 'votreBaseDeDonnees',
+      port: 8000,
+    });
+
+    await connection.execute('UPDATE users SET is_banned = 1 WHERE id = ?', [userIdToBan]);
+    await connection.end();
+
+    res.json({ status: 'ok', message: 'User banned successfully' });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ status: 'ko', error: 'Internal Server Error' });
+  }
+}
+
+// Nouvelle fonction pour lister tous les utilisateurs
+async function listUsers(req, res) {
+  try {
+    const connection = await mysql.createConnection({
+      host: 'localhost',
+      user: 'votreUtilisateur',
+      password: 'votreMotDePasse',
+      database: 'votreBaseDeDonnees',
+      port: 8000,
+    });
+
+    const [users] = await connection.execute('SELECT id, username, email, role, is_banned FROM users');
+    await connection.end();
+
+    res.json({ status: 'ok', users });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ status: 'ko', error: 'Internal Server Error' });
+  }
+}
+
+// Nouvelle fonction pour promouvoir un simple utilisateur en administrateur
+async function upgradeUser(req, res) {
+  const userIdToUpgrade = req.params.userId;
+
+  try {
+    const connection = await mysql.createConnection({
+      host: 'localhost',
+      user: 'votreUtilisateur',
+      password: 'votreMotDePasse',
+      database: 'votreBaseDeDonnees',
+      port: 8000,
+    });
+
+    await connection.execute('UPDATE users SET role = "admin" WHERE id = ?', [userIdToUpgrade]);
+    await connection.end();
+
+    res.json({ status: 'ok', message: 'User upgraded to admin successfully' });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ status: 'ko', error: 'Internal Server Error' });
+  }
+}
+
+// Nouvelle fonction pour rétrograder un administrateur en simple utilisateur
+async function downgradeUser(req, res) {
+  const userIdToDowngrade = req.params.userId;
+
+  try {
+    const connection = await mysql.createConnection({
+      host: 'localhost',
+      user: 'votreUtilisateur',
+      password: 'votreMotDePasse',
+      database: 'votreBaseDeDonnees',
+      port: 8000,
+    });
+
+    await connection.execute('UPDATE users SET role = "user" WHERE id = ?', [userIdToDowngrade]);
+    await connection.end();
+
+    res.json({ status: 'ok', message: 'User downgraded to user successfully' });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ status: 'ko', error: 'Internal Server Error' });
+  }
+}
+
 module.exports = {
   authenticateUser,
   registerUser,
   getProfile,
   uploadFile,
+  deleteUser,
+  banUser,
+  listUsers,
+  upgradeUser,
+  downgradeUser,
 };
