@@ -1,5 +1,20 @@
 const jwt = require('jsonwebtoken');
 const mysql = require('mysql2/promise');
+const multer = require('multer');
+const path = require('path');
+
+// Configuration de Multer pour spécifier le répertoire de stockage
+const storage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    cb(null, 'uploads/');
+  },
+  filename: function (req, file, cb) {
+    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
+    cb(null, file.fieldname + '-' + uniqueSuffix + path.extname(file.originalname));
+  },
+});
+
+const upload = multer({ storage: storage });
 
 const secretKey = '3b6d2e359073f3d2a27e8daad1acbd215d4d357020e6ac0291398a675a06ad86';
 
@@ -97,8 +112,29 @@ async function authenticateUser(req, res) {
     }
   }
 
+  // Nouvelle fonction pour gérer l'upload de fichier
+async function uploadFile(req, res) {
+  try {
+    // Vérifiez si un fichier a été téléchargé
+    if (!req.file) {
+      return res.status(400).json({ error: 'No file uploaded' });
+    }
+
+    // Traitez le fichier comme requis (enregistrez-le dans la base de données, etc.)
+    const filename = req.file.filename;
+
+    // Vous pouvez également ajouter le code nécessaire pour enregistrer le nom du fichier dans la base de données si nécessaire
+
+    res.json({ status: 'ok', filename });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ status: 'ko', error: 'Internal Server Error' });
+  }
+}
+
 module.exports = {
   authenticateUser,
   registerUser,
   getProfile,
+  uploadFile,
 };
