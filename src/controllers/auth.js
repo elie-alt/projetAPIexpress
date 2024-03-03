@@ -1,31 +1,44 @@
-const users = [
-    {
-      username: 'utilisateur1',
-      password: 'motdepasse1',
-    },
-    {
-      username: 'utilisateur2',
-      password: 'motdepasse2',
-    },
-  ];
-  
-  const authenticate = async (req, res) => {
+const jwt = require('jsonwebtoken');
+const mysql = require('mysql2/promise');
+
+const secretKey = '3b6d2e359073f3d2a27e8daad1acbd215d4d357020e6ac0291398a675a06ad86';
+
+function generateToken(user) {
+  return jwt.sign({ id: user.id, username: user.username }, secretKey, { expiresIn: '1h' });
+}
+
+async function authenticateUser(req, res) {
     const { username, password } = req.body;
   
-    const user = users.find((u) => u.username === username);
+    try {
+      // Créez une connexion à la base de données
+      const connection = await mysql.createConnection({
+        host: 'localhost',
+        user: 'votreUtilisateur',
+        password: 'votreMotDePasse',
+        database: 'votreBaseDeDonnees',
+        port: 8000, // Assurez-vous que le port est correct
+      });
   
-    if (!user) {
-      return res.status(401).send('Utilisateur incorrect');
+      // Recherchez l'utilisateur dans la base de données
+      const [rows] = await connection.execute('SELECT * FROM users WHERE username = ? AND password = ?', [username, password]);
+  
+      // Fermez la connexion après avoir effectué la requête
+      await connection.end();
+  
+      if (rows.length > 0) {
+        const user = rows[0];
+        const token = await generateToken(user);
+        res.json({ token });
+      } else {
+        res.status(401).json({ error: 'Bad credentials/Incorrect user' });
+      }
+    } catch (error) {
+      console.error(error);
+      res.status(500).json({ error: 'Internal Server Error' });
     }
-  
-    if (user.password !== password) {
-      return res.status(401).send('Mot de passe incorrect');
-    }
-  
-    const token = jwt.sign({ username }, 'ma-cle-secrete', { expiresIn: '1h' });
-  
-    res.json({ token });
-  };
-  
-  module.exports = { authenticate };
-  
+  }
+
+module.exports = {
+  authenticateUser,
+};

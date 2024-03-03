@@ -6,3 +6,5 @@ npm install -g node-dev
 
 à lancer dans le fichier que l'on veut run (être dans le bon fichier) : 
 node-dev fichier.js
+
+créé un clé : node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
