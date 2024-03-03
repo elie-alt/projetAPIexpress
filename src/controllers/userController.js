@@ -69,7 +69,36 @@ async function authenticateUser(req, res) {
     }
   }
 
+  async function getProfile(req, res) {
+    // Utilisez l'ID de l'utilisateur extrait du token pour récupérer les informations du profil
+    const userId = req.user.id;
+  
+    try {
+      const connection = await mysql.createConnection({
+        host: 'localhost',
+        user: 'votreUtilisateur',
+        password: 'votreMotDePasse',
+        database: 'votreBaseDeDonnees',
+        port: 8000,
+      });
+  
+      const [user] = await connection.execute('SELECT id, username, email FROM users WHERE id = ?', [userId]);
+  
+      await connection.end();
+  
+      if (user.length > 0) {
+        res.json({ id: user[0].id, username: user[0].username, email: user[0].email });
+      } else {
+        res.status(404).json({ error: 'User not found' });
+      }
+    } catch (error) {
+      console.error(error);
+      res.status(500).json({ error: 'Internal Server Error' });
+    }
+  }
+
 module.exports = {
   authenticateUser,
   registerUser,
+  getProfile,
 };
