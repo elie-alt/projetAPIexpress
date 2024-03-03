@@ -39,6 +39,37 @@ async function authenticateUser(req, res) {
     }
   }
 
+  async function registerUser(req, res) {
+    const { username, password, email } = req.body;
+  
+    try {
+      const connection = await mysql.createConnection({
+        host: 'localhost',
+        user: 'votreUtilisateur',
+        password: 'votreMotDePasse',
+        database: 'votreBaseDeDonnees',
+        port: 8000,
+      });
+  
+      // Vérifier si le pseudo ou l'email existe déjà
+      const [existingUsers] = await connection.execute('SELECT * FROM users WHERE username = ? OR email = ?', [username, email]);
+  
+      if (existingUsers.length > 0) {
+        res.json({ status: 'ko', error: 'Username or email already exists' });
+      } else {
+        // Insérer le nouvel utilisateur dans la base de données
+        await connection.execute('INSERT INTO users (username, password, email) VALUES (?, ?, ?)', [username, password, email]);
+        await connection.end();
+  
+        res.json({ status: 'ok' });
+      }
+    } catch (error) {
+      console.error(error);
+      res.status(500).json({ status: 'ko', error: 'Internal Server Error' });
+    }
+  }
+
 module.exports = {
   authenticateUser,
+  registerUser,
 };

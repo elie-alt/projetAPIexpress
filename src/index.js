@@ -5,7 +5,7 @@ const app = express();
 const port = 3000;
 
 const test = require('./routes/test.js');
-const auth = require('./routes/auth.js');
+const auth = require('./routes/userRoute.js');
 
 app.use(express.json()); 
 
